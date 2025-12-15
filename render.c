@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <math.h>
 #include <time.h>
-#include <unistd.h>
+#include "../../src/getopt_wrapper.h"
 #include <errno.h>
 #include <string.h>
 #include <assert.h>

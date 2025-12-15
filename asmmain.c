@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <unistd.h>
+#include "../../src/getopt_wrapper.h"
 #include <errno.h>
 
 #include "chip8.h"

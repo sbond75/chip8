@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <unistd.h>
+#include "../../src/getopt_wrapper.h"
 
 #include "chip8.h"
 

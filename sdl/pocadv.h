@@ -5,7 +5,7 @@
  * The simplest SDL wrapper framework I could get away with.
  */
 #if defined(ANDROID) || defined(_MSC_VER)
-#  include <SDL.h>
+#  include <SDL2/SDL.h>
 #  ifndef SDL2
 #    define SDL2
 #  endif
