@@ -217,9 +217,12 @@ void init_game(int argc, char *argv[]) {
     }
 
     if(optind >= argc) {
-        exit_error("You need to specify a CHIP-8 file.\n");
+        //exit_error("You need to specify a CHIP-8 file.\n");
+        infile = "game.ch8";
     }
-    infile = argv[optind++];
+    else {
+		infile = argv[optind++];
+    }
 
     c8_sys_hook = example_sys_hook;
 
