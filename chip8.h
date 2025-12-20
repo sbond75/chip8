@@ -50,7 +50,7 @@
 /** `#define TOTAL_RAM 4096`  \
  * Maximum addressable memory in the interpreter.
  */
-#define TOTAL_RAM 4096
+#define TOTAL_RAM (4096 * 2)
 
 /** `#define PROG_OFFSET	512`  \
  * Offset of the program in RAM. Should be 512, but
