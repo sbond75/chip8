@@ -26,7 +26,8 @@
 #include "bmp.h"
 
 /* number of instructions to execute per second */
-static int speed = 1200;
+//static int speed = 1200;
+static int speed = INT_MAX;
 
 /* Foreground color */
 static int fg_color = 0xAAAAFF;
