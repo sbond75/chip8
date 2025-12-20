@@ -136,9 +136,11 @@ void c8_step() {
 
 	uint8_t x = (opcode >> 16) & 0x0F;
 	uint8_t y = (opcode >> 12) & 0x0F;
-	uint8_t nibble = opcode & 0x0F;
+	uint8_t nibble = (opcode >> 8) & 0x0F;
+	uint8_t nibbleRight = opcode & 0x0F;
 	uint16_t nnn = opcode & 0x0FFFFF;
-	uint8_t kk = opcode & 0xFF;
+	uint8_t kk = (opcode >> 8) & 0xFF;
+	uint16_t nn = opcode & 0xFFFF;
 
 	int row, col;
 
@@ -227,24 +229,24 @@ void c8_step() {
 			C8.PC = nnn;
 			break;
 		case 0x300000:
-			/* SE Vx, kk */
-			if(C8.V[x] == kk) C8.PC += 2;
+			/* SE Vx, nn */
+			if(C8.V[x] == nn) C8.PC += 3;
 			break;
 		case 0x400000:
-			/* SNE Vx, kk */
-			if(C8.V[x] != kk) C8.PC += 2;
+			/* SNE Vx, nn */
+			if(C8.V[x] != nn) C8.PC += 3;
 			break;
 		case 0x500000:
 			/* SE Vx, Vy */
-			if(C8.V[x] == C8.V[y]) C8.PC += 2;
+			if(C8.V[x] == C8.V[y]) C8.PC += 3;
 			break;
 		case 0x600000:
-			/* LD Vx, kk */
-			C8.V[x] = kk;
+			/* LD Vx, nn */
+			C8.V[x] = nn;
 			break;
 		case 0x700000:
-			/* ADD Vx, kk */
-			C8.V[x] += kk;
+			/* ADD Vx, nn */
+			C8.V[x] += nn;
 			break;
 		case 0x800000: {
 			uint16_t ans, carry;
@@ -311,7 +313,7 @@ void c8_step() {
 		} break;
 		case 0x900000:
 			/* SNE Vx, Vy */
-			if(C8.V[x] != C8.V[y]) C8.PC += 2;
+			if(C8.V[x] != C8.V[y]) C8.PC += 3;
 			break;
 		case 0xA00000:
 			/* LD I, nnn */
@@ -325,8 +327,8 @@ void c8_step() {
 				C8.PC = (nnn + C8.V[0]) & 0xFFF;
 			break;
 		case 0xC00000:
-			/* RND Vx, kk */
-			C8.V[x] = c8_rand() & kk; /* FIXME: Better RNG? */
+			/* RND Vx, nn */
+			C8.V[x] = c8_rand() & nn; /* FIXME: Better RNG? */
 			break;
 		case 0xD00000: {
 			/* DRW Vx, Vy, nibble */
@@ -343,11 +345,11 @@ void c8_step() {
 			}
 
 			C8.V[0xF] = 0;
-			if(nibble) {
+			if(nibbleRight) {
 				x = C8.V[x]; y = C8.V[y];
 				x &= mW;
 				y &= mH;
-				for(q = 0; q < nibble; q++) {
+				for(q = 0; q < nibbleRight; q++) {
 					ty = (y + q);
 					if((quirks & QUIRKS_CLIPPING) && (ty >= H))
 						break;
@@ -408,11 +410,11 @@ void c8_step() {
 			if(kk == 0x9E) {
 				/* SKP Vx */
 				if(keys & (1 << C8.V[x]))
-					C8.PC += 2;
+					C8.PC += 3;
 			} else if(kk == 0xA1) {
 				/* SKNP Vx */
 				if(!(keys & (1 << C8.V[x])))
-					C8.PC += 2;
+					C8.PC += 3;
 			}
 		} break;
 		case 0xF00000: {
