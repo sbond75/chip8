@@ -31,10 +31,12 @@ static int speed = 1000000;
 //static int speed = INT_MAX; <-- can cause delay issues
 
 /* Foreground color */
-static int fg_color = 0xAAAAFF;
+//static int fg_color = 0xAAAAFF;
+static int fg_color = 0xA0743E;
 
 /* Background color */
-static int bg_color = 0x000055;
+//static int bg_color = 0x000055;
+static int bg_color = 0x40511F;
 
 /* Is the interpreter running? Set to 0 to enter "debug" mode */
 static int running = 1;
