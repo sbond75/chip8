@@ -131,26 +131,26 @@ void c8_step() {
 
 	if(yield || borked) return;
 
-	uint16_t opcode = C8.RAM[C8.PC] << 8 | C8.RAM[C8.PC+1];
-	C8.PC += 2;
+	uint32_t opcode = C8.RAM[C8.PC] << 16 | C8.RAM[C8.PC+1] << 8 | C8.RAM[C8.PC+2];
+	C8.PC += 3;
 
-	uint8_t x = (opcode >> 8) & 0x0F;
-	uint8_t y = (opcode >> 4) & 0x0F;
+	uint8_t x = (opcode >> 16) & 0x0F;
+	uint8_t y = (opcode >> 12) & 0x0F;
 	uint8_t nibble = opcode & 0x0F;
-	uint16_t nnn = opcode & 0x0FFF;
+	uint16_t nnn = opcode & 0x0FFFFF;
 	uint8_t kk = opcode & 0xFF;
 
 	int row, col;
 
 	screen_updated = 0;
 
-	switch(opcode & 0xF000) {
-		case 0x0000:
-			if(opcode == 0x00E0) {
+	switch(opcode & 0xF00000) {
+		case 0x000000:
+			if(opcode == 0x00E000) {
 				/* CLS */
 				memset(pixels, 0, sizeof pixels);
 				screen_updated = 1;
-			} else if(opcode == 0x00EE) {
+			} else if(opcode == 0x00EE00) {
 				/* RET */
 				if(C8.SP == 0){
 					/* You've got problems */
@@ -158,7 +158,7 @@ void c8_step() {
 					return;
 				}
 				C8.PC = C8.stack[--C8.SP];
-			} else if((opcode & 0xFFF0) == 0x00C0) {
+			} else if((opcode & 0xFFF000) == 0x00C000) {
 				/* SCD nibble */
 				c8_resolution(&col, &row);
 				row--;
@@ -169,7 +169,7 @@ void c8_step() {
 				}
 				memset(pixels, 0x0, nibble * col);
 				screen_updated = 1;
-			} else if(opcode == 0x00FB) {
+			} else if(opcode == 0x00FB00) {
 				/* SCR */
 				c8_resolution(&col, &row);
 				col >>= 3;
@@ -180,7 +180,7 @@ void c8_step() {
 					pixels[y * col] <<= 4;
 				}
 				screen_updated = 1;
-			} else if(opcode == 0x00FC) {
+			} else if(opcode == 0x00FC00) {
 				/* SCL */
 				c8_resolution(&col, &row);
 				col >>= 3;
@@ -191,18 +191,18 @@ void c8_step() {
 					pixels[y * col + x] >>= 4;
 				}
 				screen_updated = 1;
-			} else if(opcode == 0x00FD) {
+			} else if(opcode == 0x00FD00) {
 				/* EXIT */
 				C8.PC -= 2; /* reset the PC to the 00FD */
 				/* subsequent calls will encounter the 00FD again,
 					and c8_ended() will return 1 */
 				return;
-			} else if(opcode == 0x00FE) {
+			} else if(opcode == 0x00FE00) {
 				/* LOW */
 				if(hi_res)
 					screen_updated = 1;
 				hi_res = 0;
-			} else if(opcode == 0x00FF) {
+			} else if(opcode == 0x00FF00) {
 				/* HIGH */
 				if(!hi_res)
 					screen_updated = 1;
@@ -216,37 +216,37 @@ void c8_step() {
 				}
 			}
 		break;
-		case 0x1000:
+		case 0x100000:
 			/* JP nnn */
 			C8.PC = nnn;
 			break;
-		case 0x2000:
+		case 0x200000:
 			/* CALL nnn */
 			if(C8.SP >= 16) return; /* See RET */
 			C8.stack[C8.SP++] = C8.PC;
 			C8.PC = nnn;
 			break;
-		case 0x3000:
+		case 0x300000:
 			/* SE Vx, kk */
 			if(C8.V[x] == kk) C8.PC += 2;
 			break;
-		case 0x4000:
+		case 0x400000:
 			/* SNE Vx, kk */
 			if(C8.V[x] != kk) C8.PC += 2;
 			break;
-		case 0x5000:
+		case 0x500000:
 			/* SE Vx, Vy */
 			if(C8.V[x] == C8.V[y]) C8.PC += 2;
 			break;
-		case 0x6000:
+		case 0x600000:
 			/* LD Vx, kk */
 			C8.V[x] = kk;
 			break;
-		case 0x7000:
+		case 0x700000:
 			/* ADD Vx, kk */
 			C8.V[x] += kk;
 			break;
-		case 0x8000: {
+		case 0x800000: {
 			uint16_t ans, carry;
 			switch(nibble) {
 				case 0x0:
@@ -309,26 +309,26 @@ void c8_step() {
 					break;
 			}
 		} break;
-		case 0x9000:
+		case 0x900000:
 			/* SNE Vx, Vy */
 			if(C8.V[x] != C8.V[y]) C8.PC += 2;
 			break;
-		case 0xA000:
+		case 0xA00000:
 			/* LD I, nnn */
 			C8.I = nnn;
 			break;
-		case 0xB000:
+		case 0xB00000:
 			/* JP V0, nnn */
 			if(quirks & QUIRKS_JUMP)
 				C8.PC = (nnn + C8.V[x]) & 0xFFF;
 			else
 				C8.PC = (nnn + C8.V[0]) & 0xFFF;
 			break;
-		case 0xC000:
+		case 0xC00000:
 			/* RND Vx, kk */
 			C8.V[x] = c8_rand() & kk; /* FIXME: Better RNG? */
 			break;
-		case 0xD000: {
+		case 0xD00000: {
 			/* DRW Vx, Vy, nibble */
 			int mW, mH, W, H, p, q;
 			int tx, ty, byte, bit, pix;
@@ -404,7 +404,7 @@ void c8_step() {
 				yield = 1;
 			}
 			} break;
-		case 0xE000: {
+		case 0xE00000: {
 			if(kk == 0x9E) {
 				/* SKP Vx */
 				if(keys & (1 << C8.V[x]))
@@ -415,7 +415,7 @@ void c8_step() {
 					C8.PC += 2;
 			}
 		} break;
-		case 0xF000: {
+		case 0xF00000: {
 			switch(kk) {
 				case 0x07:
 					/* LD Vx, DT */
@@ -448,9 +448,9 @@ void c8_step() {
 					/* ADD I, Vx */
 					C8.I += C8.V[x];
 					/* According to [wikipedia][] the VF is set if I overflows. */
-					if(C8.I > 0xFFF) {
+					if(C8.I > 0xFFFFF) {
 						C8.V[0xF] = 1;
-						C8.I &= 0xFFF;
+						C8.I &= 0xFFFFF;
 					} else {
 						C8.V[0xF] = 0;
 					}
