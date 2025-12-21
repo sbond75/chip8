@@ -31,8 +31,9 @@
 
 /* number of instructions to execute per second */
 //static int speed = 1200;
-static int speed = 1000000;
-//static int speed = INT_MAX; <-- can cause delay issues
+//static int speed = 100000;
+//static int speed = 1000000;
+static int speed = INT_MAX; //<-- can cause setdelay issues
 
 /* Foreground color */
 //static int fg_color = 0xAAAAFF;
