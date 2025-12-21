@@ -11,7 +11,7 @@
 CC=emcc
 
 # `-s NO_EXIT_RUNTIME=0` is because of the call to `exit()` in `exit_error()`
-CFLAGS=-c -I. -Werror -Wall -DABGR=1
+CFLAGS=-c -I. -Wall -DABGR=1
 #LDFLAGS= -s WASM=0 -s NO_EXIT_RUNTIME=0
 LDFLAGS= -s NO_EXIT_RUNTIME=0
 

@@ -25,6 +25,10 @@
 #include "chip8.h"
 #include "bmp.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 /* number of instructions to execute per second */
 //static int speed = 1200;
 static int speed = 1000000;
@@ -84,6 +88,9 @@ static unsigned int Key_Mapping[16] = {
 };
 
 static void draw_screen();
+static void audio_init();
+static void audio_start();
+static void audio_stop();
 
 static void usage() {
     exit_error("Use these command line variables:\n"
@@ -273,6 +280,8 @@ void init_game(int argc, char *argv[]) {
     if(!hud)
         exit_error("unable to create HUD");
 
+    audio_init();
+
     rlog("Initialized.");
 }
 
@@ -393,6 +402,56 @@ static void draw_screen() {
 
 void bm_blit_blend(Bitmap *dst, int dx, int dy, Bitmap *src, int sx, int sy, int w, int h);
 
+#ifdef __EMSCRIPTEN__
+static void audio_init() {
+    /* Audio context will be created lazily on first use to avoid browser warnings */
+}
+
+static void audio_start() {
+    EM_ASM({
+        if (!Module.audioContext) {
+            try {
+                Module.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                Module.oscillator = null;
+                Module.gainNode = Module.audioContext.createGain();
+                Module.gainNode.connect(Module.audioContext.destination);
+                Module.gainNode.gain.value = 0.03;
+            } catch(e) {
+                console.warn('Failed to create audio context:', e);
+                return;
+            }
+        }
+        if (Module.audioContext && !Module.oscillator) {
+            try {
+                Module.oscillator = Module.audioContext.createOscillator();
+                Module.oscillator.type = 'square';
+                Module.oscillator.frequency.value = 220;
+                Module.oscillator.connect(Module.gainNode);
+                Module.oscillator.start();
+            } catch(e) {
+                console.warn('Failed to start audio:', e);
+            }
+        }
+    });
+}
+
+static void audio_stop() {
+    EM_ASM({
+        if (Module.oscillator) {
+            try {
+                Module.oscillator.stop();
+                Module.oscillator = null;
+            } catch(e) {
+                /* Ignore - oscillator may already be stopped */
+            }
+        }
+    });
+}
+#else
+static void audio_init() {}
+static void audio_start() {}
+static void audio_stop() {}
+#endif
 
 void draw_hud() {
     int i;
@@ -484,6 +543,13 @@ int render(double elapsedSeconds) {
 
         draw_screen();
         draw_hud();
+    }
+
+    /* Handle sound */
+    if(c8_sound()) {
+        audio_start();
+    } else {
+        audio_stop();
     }
 
     return 1;
